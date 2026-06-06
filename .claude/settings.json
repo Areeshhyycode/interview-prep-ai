@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(echo \"EXIT CODE: $?\")",
+      "Bash(npx next *)",
+      "Bash(echo \"---EXIT: $?---\")",
+      "Bash(echo \"dev starting \\(pid $!\\)...\")",
+      "Bash(seq 1 30)",
+      "Bash(grep -q \"Ready\\\\|started server\\\\|Local:\" dev.log)",
+      "Bash(echo \"READY\")",
+      "Bash(break)",
+      "Bash(sleep 1)",
+      "Bash(seq 1 40)",
+      "Bash(grep -qi 'Ready in\\\\|Local:' 'C:\\\\Users\\\\xoxom\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-xoxom-OneDrive-Desktop-interviewPrepAi\\\\84571468-f3a6-42a4-a399-18f1a8f7876e\\\\tasks\\\\bo132s74i.output')",
+      "Bash(echo \"=== SERVER READY ===\")",
+      "Bash(tail -8 'C:\\\\Users\\\\xoxom\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-xoxom-OneDrive-Desktop-interviewPrepAi\\\\84571468-f3a6-42a4-a399-18f1a8f7876e\\\\tasks\\\\bo132s74i.output')",
+      "Bash(grep -qi 'Ready in\\\\|Local:\\\\|Error\\\\|EADDRINUSE' 'C:\\\\Users\\\\xoxom\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-xoxom-OneDrive-Desktop-interviewPrepAi\\\\84571468-f3a6-42a4-a399-18f1a8f7876e\\\\tasks\\\\bm9s61n9v.output')",
+      "Bash(echo \"=== dev output ===\")",
+      "Bash(cat 'C:\\\\Users\\\\xoxom\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-xoxom-OneDrive-Desktop-interviewPrepAi\\\\84571468-f3a6-42a4-a399-18f1a8f7876e\\\\tasks\\\\bm9s61n9v.output')",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue)",
+      "Bash(node node_modules/next/dist/bin/next dev)",
+      "Bash(grep -qi 'Ready in\\\\|Compiled\\\\|Local:' 'C:\\\\Users\\\\xoxom\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-xoxom-OneDrive-Desktop-interviewPrepAi\\\\84571468-f3a6-42a4-a399-18f1a8f7876e\\\\tasks\\\\bfk9qx063.output')",
+      "Bash(echo \"=== server up ===\")",
+      "Bash(tail -5 'C:\\\\Users\\\\xoxom\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-xoxom-OneDrive-Desktop-interviewPrepAi\\\\84571468-f3a6-42a4-a399-18f1a8f7876e\\\\tasks\\\\bfk9qx063.output')",
+      "Bash(echo \"\")",
+      "Bash(echo \"=== TEST 1: resume parse \\(Gemini + Mongo\\) ===\")"
+    ]
+  }
+}
