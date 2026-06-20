@@ -32,6 +32,8 @@ export async function geminiGenerate(
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: opts.temperature ?? 0.7,
+      // Disable "thinking" on 2.5 models for much faster responses.
+      thinkingConfig: { thinkingBudget: 0 },
       ...(opts.json ? { responseMimeType: "application/json" } : {}),
     },
   };

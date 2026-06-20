@@ -3,6 +3,8 @@
 :root {
   --background: #0a0a0f;
   --foreground: #ededed;
+  /* Make native controls (dropdowns, scrollbars) render in dark mode. */
+  color-scheme: dark;
 }
 
 html,

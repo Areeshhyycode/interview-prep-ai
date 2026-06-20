@@ -25,7 +25,16 @@
       "Bash(echo \"=== server up ===\")",
       "Bash(tail -5 'C:\\\\Users\\\\xoxom\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-xoxom-OneDrive-Desktop-interviewPrepAi\\\\84571468-f3a6-42a4-a399-18f1a8f7876e\\\\tasks\\\\bfk9qx063.output')",
       "Bash(echo \"\")",
-      "Bash(echo \"=== TEST 1: resume parse \\(Gemini + Mongo\\) ===\")"
+      "Bash(echo \"=== TEST 1: resume parse \\(Gemini + Mongo\\) ===\")",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "Bash(git ls-remote *)",
+      "Bash(git ls-tree *)",
+      "Bash(grep -E \"^\\\\.env$\")",
+      "Bash(rm -rf .next)",
+      "Bash(node node_modules/next/dist/bin/next dev -p 3001)",
+      "Bash(curl -s -o /dev/null -w \"home page → HTTP %{http_code}\\\\n\" http://localhost:3001/)"
     ]
   }
 }

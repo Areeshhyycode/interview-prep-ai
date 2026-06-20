@@ -1,4 +1,14 @@
 import mongoose from "mongoose";
+import dns from "dns";
+
+// Some networks/ISPs can't resolve the SRV "TXT" record that mongodb+srv
+// needs, which surfaces as `queryTxt ETIMEOUT`. Forcing a public resolver
+// (Google + Cloudflare) fixes it reliably.
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1", ...dns.getServers()]);
+} catch {
+  /* ignore if not permitted */
+}
 
 const MONGODB_URI = process.env.MONGODB_URI as string;
 
