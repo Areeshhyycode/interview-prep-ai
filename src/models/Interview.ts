@@ -65,6 +65,7 @@ const ReportSchema = new Schema(
 
 const InterviewSchema = new Schema(
   {
+    clientId: { type: String, index: true },
     resumeId: { type: Schema.Types.ObjectId, ref: "Resume" },
     jobId: { type: Schema.Types.ObjectId, ref: "Job" },
     jobTitle: String,

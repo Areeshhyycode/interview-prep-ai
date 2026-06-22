@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Select from "@/components/Select";
+import { getClientId } from "@/lib/clientId";
 
 const QUICK_FOCUS = [
   "MERN",
@@ -96,6 +97,7 @@ export default function SetupPage() {
           resumeId: rData.id,
           jobId: jData.id,
           role,
+          clientId: getClientId(),
           difficulty,
           stack: focus,
           count: Number(count),

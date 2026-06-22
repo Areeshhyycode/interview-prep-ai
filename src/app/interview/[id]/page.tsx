@@ -61,6 +61,17 @@ export default function InterviewRoom({
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [error, setError] = useState("");
+  const [elapsed, setElapsed] = useState(0);
+
+  // Per-question timer: reset on new question, tick while answering.
+  useEffect(() => {
+    setElapsed(0);
+  }, [idx]);
+  useEffect(() => {
+    if (phase !== "ready" && phase !== "listening") return;
+    const t = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(t);
+  }, [phase]);
 
   const recogRef = useRef<SpeechRecognitionLike | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -245,8 +256,18 @@ export default function InterviewRoom({
       {/* Header */}
       <div className="flex items-center justify-between text-sm text-white/50">
         <span>{jobTitle}</span>
-        <span>
-          Question {idx + 1} / {questions.length}
+        <span className="flex items-center gap-3">
+          <span
+            className={`tabular-nums ${
+              phase === "listening" ? "text-red-400" : ""
+            }`}
+          >
+            ⏱ {String(Math.floor(elapsed / 60)).padStart(2, "0")}:
+            {String(elapsed % 60).padStart(2, "0")}
+          </span>
+          <span>
+            Question {idx + 1} / {questions.length}
+          </span>
         </span>
       </div>
       <div className="mt-2 h-1 w-full bg-white/10 rounded-full overflow-hidden">
@@ -333,7 +354,7 @@ export default function InterviewRoom({
           {teacher && (
             <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-5">
               <div className="text-amber-400 font-semibold text-sm flex items-center gap-2">
-                👨‍🏫 Teacher Mode
+                👨‍🏫 Concept Explained
               </div>
               <p className="mt-2 text-sm text-white/80">{teacher.explanation}</p>
               <p className="mt-3 text-sm">

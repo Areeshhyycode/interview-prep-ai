@@ -9,6 +9,43 @@ import { matchPrompt, questionGenPrompt } from "@/lib/prompts";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+// List a browser's past interviews for the dashboard.
+export async function GET(req: NextRequest) {
+  try {
+    await connectDB();
+    const clientId = req.nextUrl.searchParams.get("clientId");
+    if (!clientId) return NextResponse.json({ interviews: [] });
+
+    const docs = (await Interview.find({ clientId })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean()) as unknown as Array<{
+      _id: unknown;
+      jobTitle?: string;
+      status?: string;
+      difficulty?: string;
+      questions?: unknown[];
+      report?: { scores?: { overallReadiness?: number } };
+      createdAt?: Date;
+    }>;
+
+    const interviews = docs.map((d) => ({
+      id: d._id,
+      jobTitle: d.jobTitle || "Interview",
+      status: d.status,
+      difficulty: d.difficulty,
+      questionCount: d.questions?.length || 0,
+      readiness: d.report?.scores?.overallReadiness ?? null,
+      createdAt: d.createdAt,
+    }));
+
+    return NextResponse.json({ interviews });
+  } catch (err) {
+    console.error("[interviews/list] error:", err);
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+  }
+}
+
 interface MatchResult {
   matchedSkills: string[];
   missingSkills: string[];
@@ -35,6 +72,7 @@ export async function POST(req: NextRequest) {
       resumeId,
       jobId,
       role,
+      clientId,
       difficulty = "mixed",
       stack = [],
       count = 6,
@@ -78,6 +116,7 @@ export async function POST(req: NextRequest) {
 
     // 3. Persist interview
     const interview = await Interview.create({
+      clientId,
       resumeId: resume._id,
       jobId: job._id,
       jobTitle: job.title,

@@ -58,20 +58,19 @@ export async function POST(
       temperature: 0.2,
     });
 
-    // 2. Teacher mode if the answer was weak.
-    let teacher: Teacher | null = null;
-    if (evaluation.correctness !== "correct") {
-      const tp = teacherPrompt({
-        topic: q.topic,
-        question: q.text,
-        missedPoints: evaluation.missedPoints || [],
-        transcript,
-      });
-      teacher = await geminiJSON<Teacher>(tp.prompt, {
-        system: tp.system,
-        temperature: 0.5,
-      });
-    }
+    // 2. Concept explanation — generated for EVERY question so the candidate
+    //    always learns the concept, not just on wrong answers.
+    const tp = teacherPrompt({
+      topic: q.topic,
+      question: q.text,
+      missedPoints: evaluation.missedPoints || [],
+      transcript,
+      correctness: evaluation.correctness,
+    });
+    const teacher = await geminiJSON<Teacher>(tp.prompt, {
+      system: tp.system,
+      temperature: 0.5,
+    });
 
     // 3. Persist.
     q.answer = {

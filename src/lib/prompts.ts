@@ -136,13 +136,15 @@ export function teacherPrompt(input: {
   question: string;
   missedPoints: string[];
   transcript: string;
+  correctness: string;
 }) {
   return {
     system:
-      "You are a patient senior engineer mentoring a candidate who just answered incompletely. Teach the concept clearly and encouragingly, never condescending. Respond with JSON only.",
+      "You are a patient senior mentor. After each interview question, you clearly explain the underlying concept so the candidate fully understands it — whether they answered well or not. Be encouraging and never condescending. Respond with JSON only.",
     prompt: `TOPIC: ${input.topic}
 QUESTION: ${input.question}
-WHAT THEY MISSED: ${JSON.stringify(input.missedPoints)}
+CANDIDATE'S ANSWER WAS: ${input.correctness}
+WHAT THEY MISSED (if any): ${JSON.stringify(input.missedPoints)}
 THEIR ANSWER: """${input.transcript}"""
 
 Return JSON exactly in this shape:

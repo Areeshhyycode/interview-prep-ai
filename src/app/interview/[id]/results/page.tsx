@@ -23,6 +23,12 @@ interface ReviewItem {
   idealAnswer: string;
   transcript: string;
   evaluation: { correctness: string; feedback: string; technicalScore: number } | null;
+  teacher: {
+    explanation: string;
+    correctAnswer: string;
+    example: string;
+    tip: string;
+  } | null;
 }
 
 function ScoreRing({ label, value }: { label: string; value: number }) {
@@ -86,8 +92,18 @@ export default function ResultsPage({
 
   return (
     <main className="min-h-screen max-w-3xl mx-auto px-6 py-12">
-      <div className="text-sm text-white/50">{jobTitle}</div>
-      <h1 className="text-3xl font-bold mt-1">Your Interview Report</h1>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-sm text-white/50">{jobTitle}</div>
+          <h1 className="text-3xl font-bold mt-1">Your Interview Report</h1>
+        </div>
+        <button
+          onClick={() => window.print()}
+          className="no-print shrink-0 px-4 py-2 rounded-lg border border-white/15 text-sm text-white/80 hover:border-white/40 transition"
+        >
+          ⬇ Download PDF
+        </button>
+      </div>
 
       {/* Overall */}
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 flex flex-col items-center">
@@ -181,17 +197,40 @@ export default function ResultsPage({
               {q.evaluation && (
                 <p className="text-white/60 italic">{q.evaluation.feedback}</p>
               )}
+              {q.teacher && (
+                <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3">
+                  <div className="text-amber-400 font-semibold text-xs">
+                    👨‍🏫 Concept
+                  </div>
+                  <p className="mt-1 text-white/75">{q.teacher.explanation}</p>
+                  {q.teacher.example && (
+                    <p className="mt-1 text-white/60">
+                      <span className="text-white/40">Example: </span>
+                      {q.teacher.example}
+                    </p>
+                  )}
+                  {q.teacher.tip && (
+                    <p className="mt-1 text-emerald-300">💡 {q.teacher.tip}</p>
+                  )}
+                </div>
+              )}
             </div>
           </details>
         ))}
       </div>
 
-      <div className="mt-10 flex gap-3">
+      <div className="no-print mt-10 flex flex-wrap gap-3">
         <Link
           href="/setup"
           className="px-6 py-3 rounded-lg bg-white text-black font-medium hover:bg-white/90"
         >
           New interview
+        </Link>
+        <Link
+          href="/dashboard"
+          className="px-6 py-3 rounded-lg border border-white/15 hover:border-white/40"
+        >
+          My interviews
         </Link>
         <Link
           href="/"

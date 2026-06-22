@@ -19,3 +19,17 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Print / "Download PDF" — keep the dark design, hide interactive bits. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  details {
+    break-inside: avoid;
+  }
+}

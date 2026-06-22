@@ -24,6 +24,12 @@ export default function Home() {
           >
             Start Interview →
           </Link>
+          <Link
+            href="/dashboard"
+            className="px-6 py-3 rounded-lg border border-white/15 text-white/80 hover:border-white/40 transition"
+          >
+            My Interviews
+          </Link>
         </div>
 
         <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
