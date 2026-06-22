@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Interview from "@/models/Interview";
 import { geminiJSON } from "@/lib/gemini";
-import { evaluateAnswerPrompt, teacherPrompt } from "@/lib/prompts";
+import { evaluateAndTeachPrompt } from "@/lib/prompts";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -45,32 +45,21 @@ export async function POST(
       return NextResponse.json({ error: "Question not found." }, { status: 404 });
     }
 
-    // 1. Evaluate the spoken answer.
-    const ep = evaluateAnswerPrompt({
+    // Evaluate + explain the concept in ONE call (saves Gemini quota).
+    const ep = evaluateAndTeachPrompt({
       question: q.text,
+      topic: q.topic,
       keyPoints: q.keyPoints || [],
       idealAnswer: q.idealAnswer || "",
       transcript,
       durationSec: Number(durationSec) || 0,
     });
-    const evaluation = await geminiJSON<Evaluation>(ep.prompt, {
-      system: ep.system,
-      temperature: 0.2,
-    });
-
-    // 2. Concept explanation — generated for EVERY question so the candidate
-    //    always learns the concept, not just on wrong answers.
-    const tp = teacherPrompt({
-      topic: q.topic,
-      question: q.text,
-      missedPoints: evaluation.missedPoints || [],
-      transcript,
-      correctness: evaluation.correctness,
-    });
-    const teacher = await geminiJSON<Teacher>(tp.prompt, {
-      system: tp.system,
-      temperature: 0.5,
-    });
+    const result = await geminiJSON<{ evaluation: Evaluation; teacher: Teacher }>(
+      ep.prompt,
+      { system: ep.system, temperature: 0.3 }
+    );
+    const evaluation = result.evaluation;
+    const teacher = result.teacher;
 
     // 3. Persist.
     q.answer = {

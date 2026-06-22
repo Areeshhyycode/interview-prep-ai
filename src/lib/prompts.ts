@@ -131,6 +131,47 @@ technicalScore is 0-10. If the transcript is empty or off-topic, score low and m
   };
 }
 
+/** Evaluate the answer AND explain the concept in a SINGLE call (saves quota). */
+export function evaluateAndTeachPrompt(input: {
+  question: string;
+  topic: string;
+  keyPoints: string[];
+  idealAnswer: string;
+  transcript: string;
+  durationSec: number;
+}) {
+  return {
+    system:
+      "You are a technical interviewer. Grade the spoken answer against the rubric, then ALWAYS explain the underlying concept clearly (whether right or wrong) so the candidate learns. Respond with JSON only.",
+    prompt: `QUESTION: ${input.question}
+TOPIC: ${input.topic}
+RUBRIC KEY POINTS: ${JSON.stringify(input.keyPoints)}
+IDEAL ANSWER: ${input.idealAnswer}
+CANDIDATE TRANSCRIPT: """${input.transcript}"""
+ANSWER DURATION (sec): ${input.durationSec}
+
+Return JSON exactly in this shape:
+{
+  "evaluation": {
+    "technicalScore": 0,
+    "correctness": "correct | partial | incorrect",
+    "coveredPoints": ["string"],
+    "missedPoints": ["string"],
+    "communicationNotes": "string",
+    "confidenceSignals": "string",
+    "feedback": "2-3 sentences"
+  },
+  "teacher": {
+    "explanation": "plain-language explanation of the concept",
+    "correctAnswer": "the complete correct answer",
+    "example": "a tiny concrete example or analogy",
+    "tip": "one memorable tip"
+  }
+}
+technicalScore is 0-10. If the transcript is empty or off-topic, score low and mark incorrect. Keep the teacher section under 180 words.`,
+  };
+}
+
 export function teacherPrompt(input: {
   topic: string;
   question: string;

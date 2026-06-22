@@ -60,6 +60,10 @@ export default function CodingPage() {
       if (data.challenge) {
         setChallenge(data.challenge);
         if (data.challenge.starterCode) setCode(data.challenge.starterCode);
+        // Pre-fill stdin with the first example so "Run" works immediately.
+        const firstInput = data.challenge.examples?.[0]?.input;
+        if (firstInput) setStdin(String(firstInput));
+        setOutput("");
       }
     } finally {
       setGenLoading(false);
@@ -169,11 +173,14 @@ export default function CodingPage() {
             rows={16}
             className="w-full rounded-xl bg-[#0d0d14] border border-white/10 p-4 text-sm font-mono outline-none focus:border-white/30 resize-none"
           />
+          <label className="mt-3 block text-xs text-white/50 mb-1">
+            Program input (stdin)
+          </label>
           <input
             value={stdin}
             onChange={(e) => setStdin(e.target.value)}
-            placeholder="stdin (optional)"
-            className="mt-2 w-full rounded-lg bg-white/[0.04] border border-white/10 px-3 py-2 text-sm font-mono outline-none focus:border-white/30"
+            placeholder="e.g. hello world"
+            className="w-full rounded-lg bg-white/[0.04] border border-white/10 px-3 py-2 text-sm font-mono outline-none focus:border-white/30"
           />
           <div className="mt-3 flex gap-3">
             <button

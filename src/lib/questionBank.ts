@@ -1,13 +1,13 @@
 /**
- * Pinecone-backed question bank (RAG).
- * Every call is wrapped so failures NEVER break the interview flow —
- * if Pinecone is unavailable or the index dims mismatch, callers fall back
- * to normal Gemini generation.
+ * Pinecone-backed question bank (RAG) via the REST data plane.
+ * (The JS SDK v8 has an upsert bug, so we call REST directly with fetch.)
  *
- * NOTE: the Pinecone index must be created with dimension 768 (Gemini
- * text-embedding-004) and metric "cosine".
+ * Every call is wrapped so failures NEVER break the interview flow — if
+ * Pinecone is unavailable, callers fall back to normal Gemini generation.
+ *
+ * The index (`aihirex-jobs`) is dimension 1024, cosine — matched by the
+ * Gemini `gemini-embedding-001` embeddings (see embeddings.ts).
  */
-import { Pinecone } from "@pinecone-database/pinecone";
 import { embed } from "@/lib/embeddings";
 
 const API_KEY = process.env.PINECONE_API_KEY;
@@ -23,10 +23,19 @@ export interface BankQuestion {
   idealAnswer: string;
 }
 
-function getIndex() {
+// Resolve and cache the index host from the Pinecone control plane.
+let hostCache: string | null = null;
+async function getHost(): Promise<string | null> {
   if (!API_KEY || !INDEX) return null;
+  if (hostCache) return hostCache;
   try {
-    return new Pinecone({ apiKey: API_KEY }).index(INDEX);
+    const res = await fetch(`https://api.pinecone.io/indexes/${INDEX}`, {
+      headers: { "Api-Key": API_KEY, "X-Pinecone-API-Version": "2024-07" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    hostCache = data.host ? `https://${data.host}` : null;
+    return hostCache;
   } catch {
     return null;
   }
@@ -34,9 +43,10 @@ function getIndex() {
 
 /** Store generated questions for reuse. Best-effort, never throws. */
 export async function saveQuestions(role: string, questions: BankQuestion[]) {
-  const index = getIndex();
-  if (!index) return;
   try {
+    const host = await getHost();
+    if (!host || !questions?.length) return;
+
     const vectors = await Promise.all(
       questions.map(async (q, i) => ({
         id: `${role}|${Date.now()}|${i}|${Math.random().toString(36).slice(2)}`,
@@ -53,9 +63,15 @@ export async function saveQuestions(role: string, questions: BankQuestion[]) {
         },
       }))
     );
-    await index.upsert(
-      vectors as unknown as Parameters<typeof index.upsert>[0]
-    );
+
+    const res = await fetch(`${host}/vectors/upsert`, {
+      method: "POST",
+      headers: { "Api-Key": API_KEY!, "Content-Type": "application/json" },
+      body: JSON.stringify({ vectors }),
+    });
+    if (!res.ok) {
+      console.warn("[questionBank] save skipped:", res.status, await res.text());
+    }
   } catch (e) {
     console.warn("[questionBank] save skipped:", (e as Error).message);
   }
@@ -67,19 +83,26 @@ export async function searchQuestions(
   focus: string,
   topK: number
 ): Promise<BankQuestion[]> {
-  const index = getIndex();
-  if (!index) return [];
   try {
+    const host = await getHost();
+    if (!host) return [];
+
     const vector = await embed(`${role} ${focus}`);
-    const res = await index.query({
-      vector,
-      topK,
-      includeMetadata: true,
+    const res = await fetch(`${host}/query`, {
+      method: "POST",
+      headers: { "Api-Key": API_KEY!, "Content-Type": "application/json" },
+      body: JSON.stringify({ vector, topK, includeMetadata: true }),
     });
-    return (res.matches || [])
-      .filter((m) => (m.score ?? 0) > 0.78 && m.metadata)
-      .map((m) => {
-        const md = m.metadata as Record<string, string>;
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    return (data.matches || [])
+      .filter(
+        (m: { score?: number; metadata?: unknown }) =>
+          (m.score ?? 0) > 0.78 && m.metadata
+      )
+      .map((m: { metadata: Record<string, string> }) => {
+        const md = m.metadata;
         return {
           topic: md.topic,
           subTopic: md.subTopic,
