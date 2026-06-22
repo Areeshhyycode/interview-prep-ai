@@ -204,6 +204,35 @@ export default function InterviewRoom({
     }
   }
 
+  async function askFollowUp() {
+    setPhase("evaluating");
+    try {
+      const res = await fetch(`/api/interview/${id}/followup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: current.order }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      const fq = { ...data.question, answered: false } as Question;
+      const insertAt = idx + 1;
+      setQuestions((qs) => {
+        const c = [...qs];
+        c.splice(insertAt, 0, fq);
+        return c;
+      });
+      setTranscript("");
+      setEvaluation(null);
+      setTeacher(null);
+      setIdx(insertAt);
+      setPhase("ready");
+      speak(fq.text);
+    } catch (e) {
+      setError((e as Error).message);
+      setPhase("feedback");
+    }
+  }
+
   async function next() {
     if (idx + 1 < questions.length) {
       setIdx(idx + 1);
@@ -369,14 +398,22 @@ export default function InterviewRoom({
             </div>
           )}
 
-          <button
-            onClick={next}
-            className="w-full px-6 py-3 rounded-lg bg-white text-black font-medium hover:bg-white/90"
-          >
-            {idx + 1 < questions.length
-              ? "Next question →"
-              : "Finish & see report →"}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={askFollowUp}
+              className="px-5 py-3 rounded-lg border border-white/15 hover:border-white/40 text-sm"
+            >
+              🔎 Ask a follow-up
+            </button>
+            <button
+              onClick={next}
+              className="flex-1 px-6 py-3 rounded-lg bg-white text-black font-medium hover:bg-white/90"
+            >
+              {idx + 1 < questions.length
+                ? "Next question →"
+                : "Finish & see report →"}
+            </button>
+          </div>
         </div>
       )}
     </main>

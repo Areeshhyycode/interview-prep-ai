@@ -17,15 +17,23 @@ interface Item {
 export default function Dashboard() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
 
   useEffect(() => {
     (async () => {
+      const me = await fetch("/api/auth/me").then((r) => r.json());
+      setUser(me.user);
       const res = await fetch(`/api/interview?clientId=${getClientId()}`);
       const data = await res.json();
       setItems(data.interviews || []);
       setLoading(false);
     })();
   }, []);
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.reload();
+  }
 
   const completed = items.filter((i) => i.status === "completed" && i.readiness != null);
   const avg =
@@ -42,13 +50,39 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold tracking-tight">Your interviews</h1>
           <p className="text-white/50 mt-1.5">Track your progress over time.</p>
         </div>
-        <Link
-          href="/setup"
-          className="px-5 py-2.5 rounded-xl bg-white text-black font-semibold hover:bg-white/90"
-        >
-          + New
-        </Link>
+        <div className="flex items-center gap-3">
+          {user ? (
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-white/60">{user.name || user.email}</span>
+              <button
+                onClick={logout}
+                className="text-white/50 hover:text-white"
+              >
+                Log out
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm text-white/60 hover:text-white"
+            >
+              Log in
+            </Link>
+          )}
+          <Link
+            href="/setup"
+            className="px-5 py-2.5 rounded-xl bg-white text-black font-semibold hover:bg-white/90"
+          >
+            + New
+          </Link>
+        </div>
       </div>
+      {!loading && !user && (
+        <p className="mt-3 text-xs text-white/40">
+          Tip: <Link href="/login" className="underline">log in</Link> to keep your
+          history across devices.
+        </p>
+      )}
 
       {/* Summary */}
       {!loading && items.length > 0 && (

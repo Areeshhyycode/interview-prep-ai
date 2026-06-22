@@ -30,6 +30,12 @@ export default function Home() {
           >
             My Interviews
           </Link>
+          <Link
+            href="/coding"
+            className="px-6 py-3 rounded-lg border border-white/15 text-white/80 hover:border-white/40 transition"
+          >
+            Coding Practice
+          </Link>
         </div>
 
         <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">

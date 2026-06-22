@@ -37,6 +37,7 @@ const AnswerSchema = new Schema(
 
 const QuestionSchema = new Schema({
   order: Number,
+  isFollowUp: Boolean,
   topic: String,
   subTopic: String,
   difficulty: { type: String, enum: ["easy", "medium", "hard"] },

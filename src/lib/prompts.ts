@@ -158,6 +158,97 @@ Keep the total under 180 words so it can be spoken aloud naturally.`,
   };
 }
 
+export function followUpPrompt(input: {
+  topic: string;
+  question: string;
+  transcript: string;
+  correctness: string;
+  baseDifficulty: string;
+}) {
+  // Adaptive: scale up if they answered well, down if they struggled.
+  const targetDifficulty =
+    input.correctness === "correct"
+      ? "one step HARDER than " + input.baseDifficulty
+      : input.correctness === "incorrect"
+      ? "one step EASIER than " + input.baseDifficulty
+      : "the same as " + input.baseDifficulty;
+
+  return {
+    system:
+      "You are an interviewer asking a single natural follow-up question that digs deeper into the candidate's previous answer. Adapt the difficulty to their performance. Respond with JSON only.",
+    prompt: `PREVIOUS TOPIC: ${input.topic}
+PREVIOUS QUESTION: ${input.question}
+THEIR ANSWER: """${input.transcript}"""
+THEIR ANSWER WAS: ${input.correctness}
+TARGET DIFFICULTY: ${targetDifficulty}
+
+Generate ONE follow-up question that builds on the above. Return JSON exactly:
+{
+  "topic": "${input.topic}",
+  "subTopic": "string",
+  "difficulty": "easy | medium | hard",
+  "type": "conceptual | coding | behavioral",
+  "text": "the follow-up question",
+  "keyPoints": ["string"],
+  "idealAnswer": "string"
+}
+It must be answerable verbally in 1-2 minutes.`,
+  };
+}
+
+export function codingChallengePrompt(input: {
+  language: string;
+  difficulty: string;
+  topic?: string;
+}) {
+  return {
+    system:
+      "You are a coding interviewer. Produce one self-contained coding challenge suitable for a live interview. Respond with JSON only.",
+    prompt: `LANGUAGE: ${input.language}
+DIFFICULTY: ${input.difficulty}
+TOPIC (optional): ${input.topic || "any common DSA / practical topic"}
+
+Return JSON exactly in this shape:
+{
+  "title": "string",
+  "prompt": "clear problem statement with input/output description",
+  "examples": [{ "input": "string", "output": "string" }],
+  "starterCode": "minimal ${input.language} starter that reads input and prints output",
+  "hints": ["string"]
+}
+The problem must be solvable in ~15-20 lines and runnable by reading from stdin and printing to stdout.`,
+  };
+}
+
+export function codeReviewPrompt(input: {
+  language: string;
+  problem: string;
+  code: string;
+  output: string;
+}) {
+  return {
+    system:
+      "You are a senior engineer reviewing a candidate's code from an interview. Be concise, constructive, and specific. Respond with JSON only.",
+    prompt: `LANGUAGE: ${input.language}
+PROBLEM: ${input.problem}
+CANDIDATE CODE:
+"""${input.code.slice(0, 6000)}"""
+PROGRAM OUTPUT: """${input.output.slice(0, 2000)}"""
+
+Return JSON exactly in this shape:
+{
+  "correctness": "correct | partial | incorrect",
+  "score": 0,
+  "timeComplexity": "string",
+  "spaceComplexity": "string",
+  "strengths": ["string"],
+  "improvements": ["string"],
+  "feedback": "2-3 sentences"
+}
+score is 0-10.`,
+  };
+}
+
 export function reportPrompt(input: {
   evaluations: unknown[];
   jobTitle: string;

@@ -42,18 +42,26 @@ export async function geminiGenerate(
     body.systemInstruction = { parts: [{ text: opts.system }] };
   }
 
-  const res = await fetch(`${BASE}/models/${MODEL}:generateContent`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": API_KEY,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Gemini API error ${res.status}: ${errText}`);
+  // Retry on transient overload/rate-limit errors (503/429/500) with backoff.
+  let res: Response | null = null;
+  let lastErr = "";
+  const delays = [800, 1800, 3500];
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    res = await fetch(`${BASE}/models/${MODEL}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": API_KEY },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) break;
+    lastErr = await res.text();
+    const retriable = res.status === 503 || res.status === 429 || res.status === 500;
+    if (!retriable || attempt === delays.length) {
+      throw new Error(`Gemini API error ${res.status}: ${lastErr}`);
+    }
+    await new Promise((r) => setTimeout(r, delays[attempt]));
+  }
+  if (!res || !res.ok) {
+    throw new Error(`Gemini API error: ${lastErr}`);
   }
 
   const data = await res.json();
