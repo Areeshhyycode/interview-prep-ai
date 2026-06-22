@@ -34,8 +34,9 @@ export async function POST(req: NextRequest) {
     const {
       resumeId,
       jobId,
+      role,
       difficulty = "mixed",
-      stack = ["MERN"],
+      stack = [],
       count = 6,
       voiceId,
     } = body;
@@ -62,12 +63,13 @@ export async function POST(req: NextRequest) {
 
     // 2. Question generation
     const qp = questionGenPrompt({
+      role: role || job.title || "the role",
       matchedSkills: match.matchedSkills || [],
       missingSkills: match.missingSkills || [],
       focusAreas: job.parsed?.focusAreas || [],
       stack,
       difficulty,
-      count: Math.min(Math.max(Number(count) || 6, 3), 12),
+      count: Math.min(Math.max(Number(count) || 6, 3), 15),
     });
     const questions = await geminiJSON<GeneratedQuestion[]>(qp.prompt, {
       system: qp.system,

@@ -57,6 +57,7 @@ matchScore is 0-100 based on overlap with required skills (weighted) and focus a
 }
 
 export function questionGenPrompt(input: {
+  role: string;
   matchedSkills: string[];
   missingSkills: string[];
   focusAreas: string[];
@@ -65,22 +66,26 @@ export function questionGenPrompt(input: {
   count: number;
 }) {
   return {
-    system:
-      "You are a senior technical interviewer. Generate interview questions calibrated to the candidate's resume and the job's required skills. Each question MUST have a gradable rubric (keyPoints) and a concise idealAnswer. Respond with JSON only.",
-    prompt: `CANDIDATE STRONG SKILLS: ${JSON.stringify(input.matchedSkills)}
+    system: `You are a senior interviewer conducting a mock interview for the role of "${input.role}". Generate questions tailored to this specific role, the candidate's background, and the job description. If the role is technical, ask relevant technical questions; if it is non-technical (e.g. sales, support, management, design), ask role-specific knowledge, scenario, and behavioral questions instead. Each question MUST have a gradable rubric (keyPoints) and a concise idealAnswer. Respond with JSON only.`,
+    prompt: `TARGET ROLE / POSITION: ${input.role}
+CANDIDATE STRONG SKILLS: ${JSON.stringify(input.matchedSkills)}
 GAP SKILLS (probe lightly): ${JSON.stringify(input.missingSkills)}
-JOB FOCUS: ${JSON.stringify(input.focusAreas)}
-TARGET STACK: ${JSON.stringify(input.stack)}
+JOB FOCUS AREAS: ${JSON.stringify(input.focusAreas)}
+USER-SELECTED FOCUS: ${JSON.stringify(input.stack)}
 DIFFICULTY: ${input.difficulty}
 COUNT: ${input.count}
 
-TOPIC POOL: JavaScript (closures, promises, event loop, hoisting), React (hooks, virtual DOM, reconciliation, state management), Node.js (middleware, streams, event loop, async), MongoDB (indexing, aggregation, schema design), Next.js (SSR/ISR/RSC), Express/NestJS basics, light system design.
+GUIDANCE:
+- Tailor every question to the TARGET ROLE above. Do NOT force software questions onto a non-software role.
+- For software/engineering roles, draw from: JavaScript (closures, promises, event loop), React (hooks, virtual DOM, reconciliation), Node.js (middleware, streams, async), MongoDB (indexing, aggregation), Next.js (SSR/ISR/RSC), Express/NestJS, light system design.
+- For other roles, ask domain knowledge, real-world scenarios ("how would you handle…"), and behavioral questions relevant to that job.
+- Respect the USER-SELECTED FOCUS topics when provided.
 
 Rules:
 - Questions must be answerable VERBALLY in 1-3 minutes.
 - Progress from easier to harder.
 - No duplicate concepts.
-- Mix conceptual and practical.
+- Mix conceptual, practical, and behavioral.
 
 Return a JSON ARRAY of exactly ${input.count} items, each:
 {
