@@ -4,7 +4,7 @@ import Resume from "@/models/Resume";
 import Job from "@/models/Job";
 import Interview from "@/models/Interview";
 import { geminiJSON } from "@/lib/gemini";
-import { matchPrompt, questionGenPrompt } from "@/lib/prompts";
+import { matchPrompt, matchAndQuestionsPrompt } from "@/lib/prompts";
 import { getUserId } from "@/lib/auth";
 import { searchQuestions, saveQuestions } from "@/lib/questionBank";
 
@@ -97,43 +97,47 @@ export async function POST(req: NextRequest) {
     const userId = getUserId(req);
     const ownerId = userId ? `u:${userId}` : clientId;
 
-    // 1. Match analysis
-    const mp = matchPrompt(resume.parsed?.skills || [], {
-      requiredSkills: job.parsed?.requiredSkills || [],
-      niceToHave: job.parsed?.niceToHave || [],
-      focusAreas: job.parsed?.focusAreas || [],
-    });
-    const match = await geminiJSON<MatchResult>(mp.prompt, {
-      system: mp.system,
-      temperature: 0.3,
-    });
-
-    // 2. Question generation — reuse from the RAG bank if we have enough
-    //    relevant matches (saves a Gemini call); otherwise generate + bank them.
     const roleName = role || job.title || "the role";
     const n = Math.min(Math.max(Number(count) || 6, 3), 15);
     const focusStr = [...(stack || []), ...(job.parsed?.focusAreas || [])].join(", ");
 
+    // Reuse from the RAG bank if we have enough relevant matches.
+    let match: MatchResult;
     let questions: GeneratedQuestion[] = [];
     let source = "bank";
     const banked = await searchQuestions(roleName, focusStr, n);
+
     if (banked.length >= n) {
+      // Bank hit → questions are free; only run a quick match analysis.
       questions = banked.slice(0, n) as GeneratedQuestion[];
+      const mp = matchPrompt(resume.parsed?.skills || [], {
+        requiredSkills: job.parsed?.requiredSkills || [],
+        niceToHave: job.parsed?.niceToHave || [],
+        focusAreas: job.parsed?.focusAreas || [],
+      });
+      match = await geminiJSON<MatchResult>(mp.prompt, {
+        system: mp.system,
+        temperature: 0.3,
+      });
     } else {
+      // No bank hit → match + questions in ONE Gemini call (saves a request).
       source = "generated";
-      const qp = questionGenPrompt({
+      const mq = matchAndQuestionsPrompt({
         role: roleName,
-        matchedSkills: match.matchedSkills || [],
-        missingSkills: match.missingSkills || [],
+        resumeSkills: resume.parsed?.skills || [],
+        requiredSkills: job.parsed?.requiredSkills || [],
+        niceToHave: job.parsed?.niceToHave || [],
         focusAreas: job.parsed?.focusAreas || [],
         stack,
         difficulty,
         count: n,
       });
-      questions = await geminiJSON<GeneratedQuestion[]>(qp.prompt, {
-        system: qp.system,
-        temperature: 0.7,
-      });
+      const res = await geminiJSON<{
+        match: MatchResult;
+        questions: GeneratedQuestion[];
+      }>(mq.prompt, { system: mq.system, temperature: 0.6 });
+      match = res.match;
+      questions = res.questions || [];
       // Fire-and-forget: grow the bank for next time.
       saveQuestions(roleName, questions).catch(() => {});
     }

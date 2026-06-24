@@ -56,6 +56,55 @@ matchScore is 0-100 based on overlap with required skills (weighted) and focus a
   };
 }
 
+/** Match analysis + question generation in ONE call (halves Gemini usage). */
+export function matchAndQuestionsPrompt(input: {
+  role: string;
+  resumeSkills: string[];
+  requiredSkills: string[];
+  niceToHave: string[];
+  focusAreas: string[];
+  stack: string[];
+  difficulty: string;
+  count: number;
+}) {
+  return {
+    system: `You are a senior interviewer for the role of "${input.role}". First assess how well the candidate matches the job, then generate tailored interview questions. If the role is non-technical, ask role-specific knowledge / scenario / behavioral questions instead of forcing technical ones. Respond with JSON only.`,
+    prompt: `TARGET ROLE: ${input.role}
+CANDIDATE SKILLS: ${JSON.stringify(input.resumeSkills)}
+JOB REQUIRED SKILLS: ${JSON.stringify(input.requiredSkills)}
+JOB NICE-TO-HAVE: ${JSON.stringify(input.niceToHave)}
+JOB FOCUS AREAS: ${JSON.stringify(input.focusAreas)}
+USER-SELECTED FOCUS: ${JSON.stringify(input.stack)}
+DIFFICULTY: ${input.difficulty}
+COUNT: ${input.count}
+
+For software roles draw from: JavaScript, React, Node.js, MongoDB, Next.js, Express/NestJS, light system design. For other roles, ask domain + scenario + behavioral questions.
+
+Return JSON exactly:
+{
+  "match": {
+    "matchedSkills": ["string"],
+    "missingSkills": ["string"],
+    "matchScore": 0,
+    "recommendedTopics": [{ "topic": "string", "priority": "high | med | low" }]
+  },
+  "questions": [
+    {
+      "order": 1,
+      "topic": "string",
+      "subTopic": "string",
+      "difficulty": "easy | medium | hard",
+      "type": "conceptual | coding | behavioral",
+      "text": "string",
+      "keyPoints": ["string"],
+      "idealAnswer": "string"
+    }
+  ]
+}
+Produce exactly ${input.count} questions, answerable verbally in 1-3 minutes, progressing easy → hard, no duplicates. matchScore is 0-100.`,
+  };
+}
+
 export function questionGenPrompt(input: {
   role: string;
   matchedSkills: string[];
