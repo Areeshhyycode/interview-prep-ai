@@ -11,7 +11,6 @@
 /build
 
 # env files (NEVER commit real keys)
-.env
 .env*.local
 
 # misc
@@ -25,3 +24,4 @@ next-env.d.ts
 
 # uploads (local dev resume storage)
 /uploads
+config.bat
